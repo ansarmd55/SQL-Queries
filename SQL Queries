@@ -1,0 +1,1193 @@
+1)Tocheck the last gather stat procedure 
+  select SCHEMA_NAME,OBJECT_NAME,OBJECT_TYPE,LAST_GATHER_DATE LAST_GATHER_START_TIME,EST_PERCENT from FND_STATS_HIST where OBJECT_NAME='XLA_TRANSACTION_ENTITIES';
+
+2)To check the concurrent prog,responsibility and request group
+
+  SELECT C.CONCURRENT_PROGRAM_NAME,USER_CONCURRENT_PROGRAM_NAME,REQUEST_GROUP_NAME,fr.responsibility_name
+  FROM FND_REQUEST_GROUPS A,FND_REQUEST_GROUP_UNITS B,FND_CONCURRENT_PROGRAMS_VL C,fnd_responsibility_vl fr WHERE
+  A.REQUEST_GROUP_ID = B.REQUEST_GROUP_ID AND A.APPLICATION_ID = B.APPLICATION_ID AND C.CONCURRENT_PROGRAM_ID = b.REQUEST_UNIT_ID
+  and a.request_group_id=fr.request_group_id AND USER_CONCURRENT_PROGRAM_NAME like 'Sales Tax Rate Interface';
+
+3)Backup a table
+  create table table1_bkp as select * from table1;
+
+4)Update a table
+  update table1 set col1='5' where col1 is 2;
+
+5)Checking the size of any table
+  select * from dba_segments where SEGMENT_NAME='IBY_PMT_INSTR_USES_ALL';
+
+6)Running Gather stats(check the owner)
+
+WC_ODWX_CTA_APPL_STATUS_F 
+WC_ODWX_CTA_APPL_STAT_PIVOT_D 
+  Begin exec FND_STATS.GATHER_TABLE_STATS(ownname=>'XLA', tabname=>'MTL_MATERIAL_TRANSACTIONS',percent=>50,degree=>5);
+  Exec DBMS_STATS.GATHER_TABLE_STATS(ownname => 'ODWX', tabname => 'ODW_PROTOCOL_DEVIATION', cascade=> true, degree=> 8);
+  Exec DBMS_STATS.GATHER_TABLE_STATS(ownname => 'ODWX', tabname => 'WC_ODWX_PROTOCOL_DEVIATION_D ', cascade=> true, degree=> 8);
+  Exec DBMS_STATS.GATHER_TABLE_STATS(ownname => 'ODWX', tabname => 'WC_ODWX_PROTOCOL_DEVIATION_D', estimate_percent=> 40 ,cascade=> true, degree=> 8);
+ 
+  Begin
+  exec FND_STATS.GATHER_TABLE_STATS (ownname=>'XLA',tabname=>'XLA_TRANSACTION_ENTITIES',percent=>30,degree=>5);
+  end;
+  /
+  exec fnd_stats.gather_table_stats ('XLA','XLA_TRANSACTION_ENTITIES',30);
+
+  spool restore_stat_apsgdev.log
+  PROMPT Restoring schema : ALL
+  select to_char(sysdate,'DD-MON-YYYY HH24:MI:SS') FROM DUAL;
+  execute fnd_stats.restore_schema_stats('ALL','APSQAIT_27JULY2010');
+  select to_char(sysdate,'DD-MON-YYYY HH24:MI:SS') FROM DUAL;
+  spool off;
+
+
+7)To check the FND  Debug Log file from Request Id
+
+  SELECT LOG.MESSAGE_TEXT, LOG.MODULE FROM FND_LOG_MESSAGES LOG,FND_LOG_TRANSACTION_CONTEXT CON
+  WHERE CON.TRANSACTION_ID = &request_id AND CON.TRANSACTION_TYPE = 'REQUEST'
+  AND CON.TRANSACTION_CONTEXT_ID = LOG.TRANSACTION_CONTEXT_ID ORDER BY LOG.LOG_SEQUENCE;
+  
+8) select FILE#,CREATION_TIME,BYTES/1024/1024/1024 in GB from  v$tempfile;
+   select FILE#,CREATION_TIME from  v$tempfile;
+   @tempfile.sql
+   cd rac_scripts
+   @tsusage.sql
+   desc v$tempfile
+   @tablespace_free_report.sql
+   alter tablespace TEMP add tempfile '+R12UTIL' size 50m autoextend on maxsize 10g;
+
+   
+   resize tablespace:
+    alter tablespace UNDOTBS3 resize 150g;
+	
+select ID,MODULE_NAME,STATUS,to_char(process_dt,'DD-MON-YYYY HH:MI:SSAM')from ods_control where rownum < 10 order by ID desc;
+
+9) desc v$asm_diskgroup
+   set linesize 500  
+   set page size 450
+   select FILE_NAME from dba_data_files;
+   select 'alter tablespace '||tablespace_name||' add datafile ''+R12UTIL'' size 50m autoextend on maxsize 30g;' from dba_tablespaces;
+   sho parameter parallel_min_server
+
+10)gv$session
+   gv$sql
+   fnd_install_table
+
+11)To check the patch set level
+   select * from fnd_product_installations where patch_level like '%BOM%';
+
+12)Take the SID from OEM
+also run blocking locks using rac_blockinglocks.sql 
+select * from gv$session where SID='2023';(take the process number from this table)
+select * from v$sqltext where sql_id ='d1s02myktu19h';
+   select * from fnd_install_processes where worker_id ='1';
+
+13)Alter package package_name compile;
+   alter package AMW_CONSTRAINT_PVT compile body;
+   
+14)Adding a value in a database parameter file
+   alter system set utl_file_dir='/prj4/output/temp,/prj4/output/temp/sqlt,/prj4/output/out,/usr/tmp,/prj4/output/log,/tmp,/prj4/output/roi_data,         /prj4/output/roi_data/cdf,/prj4/output/roi_data/cdf/inbound,/prj4/output/roi_data/cdf/inbound/archive,/prj4/output/roi_data/cdf/outbound' scope = spfile; 
+  
+   alter system set utl_file_dir='/prj4/output/temp/sqlt' scope = spfile;
+
+15)To check all the active processes 
+   select * from gv$session where type <> 'BACKGROUND' and status like 'ACTIVE' and process like '16257';
+   select * from gv$sqltext where SQL_ID='9maa4af4p8svp';  (sql id should be previous session id if not found for current)
+
+16)Running Gather stats(check the owner)
+   exec FND_STATS.GATHER_TABLE_STATS(ownname=>'INV', tabname=>'MTL_MATERIAL_TRANSACTIONS',percent=>50,degree=>5);
+   exec FND_STATS.GATHER_TABLE_STATS(ownname =>'AR', tabname=>'AR_CASH_RECEIPTS_ALL',percent=>DBMS_STATS.AUTO_SAMPLE_SIZE,cascade=>TRUE);
+
+17)Checking the size of any table
+   select * from dba_segments where SEGMENT_NAME='IBY_PMT_INSTR_USES_ALL';
+
+18)SELECT status, control_code, context,pdi_product, pdi_username,command, file_product, subdirectory, filename,arguments, symbolic_arguments
+   FROM fnd_install_processes WHERE worker_id = 1
+
+19)select * from dba_db_links 
+   select name from v$database@QAI_APSQAI
+
+20)grant select any dictionary to ROTINGZ;
+   grant select_catalog_role to ROTINGZ;
+
+
+21) DB Link Creation Syntax
+      CREATE [SHARED][PUBLIC] DATABASE LINK link_name
+     [CONNECT TO CURRENT_USER]
+        [USING 'connect_string']
+
+    CREATE [SHARED][PUBLIC] DATABASE LINK link_name
+      [CONNECT TO user IDENTIFIED BY password]
+      [AUTHENTICATED BY user IDENTIFIED BY password]
+         [USING 'connect_string']
+
+change the password
+alter user RO208037490 identified by HELLOLEAH1234567;
+
+22)select last_analyzed from dba_tables where table_name like '...';
+
+
+23)alter database backup controlfile to trace as '/tmp/prj4_control.sql';
+
+24)select INDEX_NAME,TABLE_OWNER,TABLE_NAME,status from all_indexes where INDEX_NAME='GES_MTL_MTRL_TRANS_TMP_N25'; (upper)
+   alter index INV.GES_MTL_MTRL_TRANS_TMP_N25 REBUILD;
+
+25)select * from dba_directories where directory_name like '%ECE%';
+   create directory UTC_GL_CONCUR_DIR as '/apsqait/output/temp';
+
+26)select NODE_NAME from fnd_nodes;
+
+27)SELECT DBMS_METADATA.GET_DDL('INDEX PARTITION','XLA_TRANSACTION_ENTITIES_U1','XLA') FROM DUAL;
+
+28)To grant role to read only user  
+
+   select distinct(granted_role) from dba_role_privs where grantee like '%RO%';
+   select distinct(granted_role) from dba_role_privs where grantee like '%RO%';
+   Provide the role UTC_READ_ONLY_ROLE to the user.
+   SQL> grant UTC_READ_ONLY_ROLE to ROSUZAN;
+
+Grant succeeded.
+
+   SQL> conn ROSUZAN
+   Enter password:
+   Connected.
+   SQL> conn /as sysdba
+   Connected.
+
+
+29)select aap.patch_name,aap.PATCH_TYPE,apd.DRIVER_FILE_NAME,aat.name,to_char(apr.end_date,'DD-MON-RRRR') as last_applied
+   from ad_applied_patches aap,
+   ad_patch_drivers apd,
+   ad_patch_runs apr,
+   ad_appl_tops aat
+   where aap.applied_patch_id=apd.applied_patch_id
+   and apd.patch_driver_id=apr.patch_driver_id
+   and aat.appl_top_id=apr.appl_top_id
+   and aap.patch_name in ('8360688');
+
+
+30)select APPL_TOP_ID,NAME from ad_appl_tops;
+
+31)alter database enable block change tracking using file '/u01/app/oracvle/mysid/data/block_change_tracking.dbf';
+
+32)select filename,status,bytes from v$block_change_tracking;
+
+33)view the size of the CTWR dba buffer by looking at v$sgastat:
+
+    SELECT * FROM v$sgastat WHERE name like 'CTWR%'; 
+
+34)To check whether the block change tracking file is being used or not
+
+    select file#,avg(datafile_blocks),avg(blocks_read),avg(blocks_read/datafile_blocks) * 100 as  "% read for backup"  from v$backup_datafile  where
+    incremental_level > 0  and  used_change_tracking = 'YES'  group by file#  order by file# ;
+
+
+
+35)How to check for the number of DATAFILES / MAXDATAFILES in an Oracle Database?
+    select 'MAXDATAFILES '||RECORDS_TOTAL, RECORDS_USED from v$controlfile_record_section where type = 'DATAFILE';
+    select max(FILE_ID) from DBA_DATA_FILES;
+
+36)select SUM( bytes )/(1024 * 1024 *1024) as "Total Size IN GB" from dba_data_files;
+
+
+37)col FILENAME format a70
+
+38)ARCHIVE LOG START '/backup/devdata/rman_prj1_29July/arch';
+
+39)ALTER DATABASE ARCHIVELOG;
+
+40)alter system set parallel_max_servers=24 scope=both sid=(*);
+
+41)select 'alter system kill session '''||SID||','||SERIAL#||''';' from gv$session where type <> 'BACKGROUND' and STATUS like 'ACTIVE';
+   alter system kill session '1142,32935,@2';
+
+42)select concurrent_program_id from fnd_concurrent_programs_vl where user_concurrent_program_name like '%UTCFS Europe%Dunning%AventX';
+
+43)select request_id from fnd_concurrent_requests where concurrent_program_id='1048050';
+
+44)Table Creation
+    create table apps.cz_db_settings_08sep2013
+    (
+    SETTING_ID VARCHAR2(40) NOT NULL ,
+    SECTION_NAME VARCHAR2(30) NOT NULL,
+    DATA_TYPE NUMBER(8),
+    VALUE VARCHAR2(255),
+    DESC_TEXT VARCHAR2(255)
+    );
+
+45)Table Insertion
+    Insert into apps.cz_db_settings_08sep2013 (SETTING_ID,SECTION_NAME,DATA_TYPE,VALUE,DESC_TEXT) 
+    values ('AltBatchValidateURL','ORAAPPS_INTEGRATE','4','http://oracle-qait-int-dev.1utcfs.com/configurator/oracle.apps.cz.servlet.UiServlet','URL to the Internal URL');
+
+
+46)Checking if ICM is up from backend:
+    select MAX_PROCESSES,RUNNING_PROCESSES from apps.FND_CONCURRENT_QUEUES where CONCURRENT_QUEUE_NAME='FNDICM';
+
+47)Checking if standard manager is up from backend.
+    select MAX_PROCESSES,RUNNING_PROCESSES from FND_CONCURRENT_QUEUES where CONCURRENT_QUEUE_NAME='STANDARD';
+
+48)Check diskgroup size for datafile resizing to increase the space ina tablespace
+    select NAME,TOTAL_MB,FREE_MB from gv$asm_diskgroup where NAME like 'QAIT_DATA01';
+
+49)Use following query to determine the tablespace report.
+    set head off
+    Select 'Tablespace Usage Report for PRDCMA in MBs' from dual;
+    Select 'Date: '||sysdate from dual;
+    set pagesize 1000
+    set head on
+    set line 200
+    SELECT A.TABLESPACE_NAME,
+    round(A.BYTES/1024/1024) "TOTAL",
+    round(B.BYTES/1024/1024) "USED",
+    round(C.BYTES/1024/1024) "FREE",
+    round((B.BYTES*100)/A.BYTES) "% USED",
+    round((C.BYTES*100)/A.BYTES) "% FREE"
+    FROM
+    SYS.SM$TS_AVAIL A,
+    SYS.SM$TS_USED B,
+    SYS.SM$TS_FREE C
+    WHERE A.TABLESPACE_NAME=B.TABLESPACE_NAME
+    AND
+    A.TABLESPACE_NAME=C.TABLESPACE_NAME
+    and a.TABLESPACE_NAME like '%APPS_TS_TX_IDX%';
+    /
+    set head off
+
+select FILE_ID,FILE_NAME,TABLESPACE_NAME,bytes/1024/1024/1024,AUTOEXTENSIBLE from dba_data_files
+
+	
+50)Datafile resizing
+    alter database datafile '+QAIT_DATA01/qait/datafile/apps_ts_tx_data.511.824300823' resize 20g;
+
+51)Datafile Addition
+    alter tablespace APPS_TS_TX_DATA add datafile '+QAPT_DATA' size 10g autoextend on next 100m maxsize 20g;
+
+    APPS_TS_TX_DATA|+QAIT_DATA01/qait/datafile/apps_ts_tx_data.340.824979121|30720|50
+
+52)Check which table falls under which tablespace
+    select OWNER,TABLE_NAME,TABLESPACE_NAME from dba_tables where TABLE_NAME like 'FND_LOG_MESSAGES';
+
+53)Check If Auto-extend On ot not on datafiles   
+    set linesize 300
+    set pagesize 300
+    col FILE_NAME format a70
+    col AUTOEXTENSIBLE format a20
+    select FILE_NAME,BYTES/1024/1024/1024 "Actual Size GB",AUTOEXTENSIBLE,MAXBYTES/1024/1024/1024 "TOTAL SIZE GB" from dba_data_files
+    where TABLESPACE_NAME like 'APPS_TS_TX_DATA';
+
+54)Check whether expdp is running or not
+    SELECT owner_name, job_name, operation, job_mode, state FROM dba_datapump_jobs;
+	
+55)Upper Character Checking
+    select user_id from apps.fnd_user where user_name= upper('&UserName');
+    select OWNER,OBJECT_NAME,OBJECT_TYPE from dba_objects where OBJECT_NAME like upper('fnd_log_messages%');
+
+56)Checking the profile options for users from backend
+    select decode(a.profile_option_name,
+    'AFLOG_ENABLED','FND: Debug Log Enabled',
+    'AFLOG_LEVEL','FND: Debug Log Level',
+    'AFLOG_MODULE','FND: Debug Log Module',
+    'INV_DEBUG_TRACE','INV: Debug Trace',
+    'INV_DEBUG_FILE','INV: Debug file',
+    'INV_DEBUG_LEVEL','INV:Debug Level',
+    'ONT_DEBUG_LEVEL','OM: Debug Level',
+    'OE_DEBUG_LOG_DIRECTORY','OM: Debug Log Directory',
+    'PO_RVCTP_ENABLE_TRACE','PO:Enable Sql Trace for Receiving Processor',
+    'RCV_DEBUG_MODE','RCV: Debug Mode',
+    'RCV_TP_MODE','RCV: Processing Mode',
+    'FND_INIT_SQL','Initialization SQL Statement - Custom') "Profile",
+    c.PROFILE_OPTION_VALUE "Profile Value"
+    from apps.fnd_profile_options a, apps.FND_PROFILE_OPTION_VALUES c
+    where a.PROFILE_option_NAME in (
+    'AFLOG_ENABLED',
+    'AFLOG_LEVEL',
+    'AFLOG_MODULE',
+    'INV_DEBUG_TRACE',
+    'INV_DEBUG_FILE',
+    'INV_DEBUG_LEVEL',
+    'ONT_DEBUG_LEVEL',
+    'OE_DEBUG_LOG_DIRECTORY',
+    'PO_RVCTP_ENABLE_TRACE',
+    'RCV_DEBUG_MODE',
+    'RCV_TP_MODE',
+    'FND_INIT_SQL')
+    and a.profile_option_id = c.profile_option_id (+)
+    and a.application_id = c.application_id (+)
+    and &UserID = c.level_value (+)
+    and 10004 = c.level_id (+)
+    order by a.profile_option_name;
+
+57)Checking all profile debug options for users
+    col CONTEXT format a40
+    col SHORT_NAME format a25
+    col NAME format a25
+    set linesize 450
+    col VALUE format a90
+    set pagesize 300
+    select p.profile_option_name SHORT_NAME,
+    n.user_profile_option_name NAME,
+    decode(v.level_id,
+    10001, 'Site',
+    10002, 'Application',
+    10003, 'Responsibility',
+    10004, 'User',
+    10005, 'Server',
+    'UnDef') LEVEL_SET,
+    decode(to_char(v.level_id),
+    '10001', '',
+    '10002', app.application_short_name,
+    '10003', rsp.responsibility_key,
+    '10005', svr.node_name,
+    '10006', org.name,
+    '10004', usr.user_name,
+    'UnDef') "CONTEXT",
+    v.profile_option_value VALUE
+    from fnd_profile_options p,
+    fnd_profile_option_values v,
+    fnd_profile_options_tl n,
+    fnd_user usr,
+    fnd_application app,
+    fnd_responsibility rsp,
+    fnd_nodes svr,
+    hr_operating_units org
+    where p.profile_option_id = v.profile_option_id (+)
+    and p.profile_option_name = n.profile_option_name
+    and usr.user_id (+) = v.level_value
+    and rsp.application_id (+) = v.level_value_application_id
+    and rsp.responsibility_id (+) = v.level_value
+    and app.application_id (+) = v.level_value
+    and svr.node_id (+) = v.level_value
+    and org.organization_id (+) = v.level_value
+    and usr.user_name ='MONALISAS'
+    order by short_name; 
+
+58)check the item type using the below query to provide the workflow file
+    select DISPLAY_NAME,CUSTOM_LEVEL,NAME from WF_ITEM_TYPES_TL where NAME='OEOL';
+    WFLOAD apps/<apps pwd> 0 Y DOWNLOAD <wft file name> itemtype
+
+59)Check Concurrent request last run date and details.
+    select fcp.user_concurrent_program_name
+    ,fcr.request_date
+    ,fu.user_name
+    ,fcr.actual_start_date
+    ,fcr.actual_completion_date
+    ,fcr.phase_code
+    ,fcr.status_code
+    ,fcr.argument1
+    ,fcr.argument2
+    ,fcr.argument3
+    ,fcp.LAST_UPDATE_DATE
+    from fnd_concurrent_programs_vl fcp
+    ,fnd_concurrent_requests fcr
+    ,fnd_user fu
+    where fcp.user_concurrent_program_name like '%Gather%'
+    and fcp.concurrent_program_id = fcr.concurrent_program_id
+    and fcr.requested_by = fu.user_id
+    order by fcr.actual_completion_date desc  
+
+60)delete noprompt force archivelog until time 'sysdate-2' device type disk;
+    rman target /
+    delete archivelog all
+
+61)To Check the clonned date.
+    select created from v$database;
+    select SEGMENT_NAME,bytes/1024/1024 SIZEMB,TABLESPACE_NAME from dba_segments where SEGMENT_NAME in 
+    (select TABLE_NAME from dba_tables where OWNER like 'APPLSYS' and TABLE_NAME like '%BAK%') order by bytes desc;
+
+K!n8k0ng11m
+
+62)To check the application short name
+    select APPLICATION_ID,APPLICATION_NAME from fnd_application_tl where APPLICATION_NAME='Payables';
+    select APPLICATION_SHORT_NAME from fnd_application where APPLICATION_ID=200;
+    select APPLICATION_SHORT_NAME,APPLICATION_ID from fnd_application where APPLICATION_SHORT_NAME like '%AP%';
+
+63) select MSC_INTERORG_SHIP_METHODS_S.CURRVAL from dual;
+    select MSC_INTERORG_SHIP_METHODS_S.NEXTVAL from dual;
+
+64) SELECT DBMS_METADATA.GET_DDL('OBJECT_TYPE','OBJECT_NAME','OWNER') FROM DUAL;
+    select dbms_metadata.get_ddl('SEQUENCE','MSC_INTERORG_SHIP_METHODS_S','MSC') from dual;
+
+    alter sequence MSC.MSC_INTERORG_SHIP_METHODS_S MAXVALUE 4294967294;
+     Sequence altered.
+
+    select dbms_metadata.get_ddl('SEQUENCE','MSC_INTERORG_SHIP_METHODS_S','MSC') from dual;
+     CREATE SEQUENCE  "MSC"."MSC_INTERORG_SHIP_METHODS_S"  MINVALUE 1 MAXVALUE 4294967294 INCREMENT BY 1 START WITH 2147483648 CACH
+      E 1000 NOORDER  NOCYCLE
+
+    select name from v$database;
+     APSQAIT
+
+65)To check the ICM log
+    SELECT 'ICM_LOG_NAME=' || fcp.logfile_name
+    FROM fnd_concurrent_processes fcp, fnd_concurrent_queues fcq
+    WHERE fcp.concurrent_queue_id = fcq.concurrent_queue_id
+    AND fcp.queue_application_id = fcq.application_id
+    AND fcq.manager_type = '0'
+    AND fcp.process_status_code = 'A';
+
+66) ALTER SEQUENCE emp_sequence INCREMENT BY 10 MAXVALUE 10000 CYCLE CACHE 20;
+
+67)To check Trace id and program name for locating a trace
+    select fcr.request_id "Request ID"
+    , fcr.oracle_process_id "Trace ID"
+    , p1.value||'/'||lower(p2.value)||'_ora_'||fcr.oracle_process_id||'.trc' "Trace File"
+    , to_char(fcr.actual_completion_date, 'dd-mon-yyyy hh24:mi:ss') "Completed"
+    , fcp.user_concurrent_program_name "Program"
+    , fe.execution_file_name|| fe.subroutine_name "Program File"
+    , decode(fcr.phase_code,'R','Running')||'-'||decode(fcr.status_code,'R','Normal') "Status"
+    , fcr.enable_trace "Trace Flag"
+    from fnd_concurrent_requests fcr
+    , v$parameter p1
+    , v$parameter p2
+    , fnd_concurrent_programs_vl fcp
+     , fnd_executables fe
+    where p1.name='user_dump_dest'
+    and p2.name='db_name'
+    and fcr.concurrent_program_id = fcp.concurrent_program_id
+    and fcr.program_application_id = fcp.application_id
+    and fcp.application_id = fe.application_id
+    and fcp.executable_id=fe.executable_id
+    and ((fcr.request_id = &request_id)
+    or fcr.actual_completion_date > trunc(sysdate))
+    order by decode(fcr.request_id, &request_id, 1, 2), fcr.actual_completion_date desc;
+
+68)select a.RESPONSIBILITY_NAME,b.RESPONSIBILITY_KEY from fnd_responsibility b,fnd_responsibility_tl a 
+    where a.RESPONSIBILITY_ID=b.RESPONSIBILITY_ID and a.RESPONSIBILITY_NAME in ('SHIPPING - SLE','SHIPPING - SNA','SHIPPING - BCT',        
+
+69)select LIMIT,PROFILE from dba_profiles where RESOURCE_NAME like 'PASSWORD_REUSE_TIME' and PROFILE like 'DEFAULT';
+
+70)select LIMIT,PROFILE from dba_profiles where RESOURCE_NAME like 'PASSWORD_REUSE_TIME' and PROFILE like 'APP_SCHOWNNEW';
+
+71)select LIMIT,PROFILE from dba_profiles where RESOURCE_NAME in ('PASSWORD_REUSE_MAX','PASSWORD_REUSE_TIME') and PROFILE like 'APP_SCHOWNNEW ';
+
+72)ALTER PROFILE APP_SCHOWNNEW LIMIT PASSWORD_REUSE_TIME 720;
+
+73)SELECT message_text FROM fnd_log_messages WHERE log_sequence BETWEEN 601690269 AND 601701522 ORDER BY log_sequence;
+
+74)To check which index is created on which column of a table
+    select b.uniqueness, a.index_name, a.table_name, a.column_name from all_ind_columns a, all_indexes b
+    where a.index_name=b.index_name and a.table_name = upper('WSH_DELIVERY_DETAILS')
+    order by a.table_name, a.index_name, a.column_position;
+
+75)select * from dba_ind_columns where TABLE_NAME like 'WSH_DELIVERY_DETAILS';(Now check the status of that index form all_indexes)
+
+76)select dbms_metadata.get_ddl('index','wsh_delivery_details_n12','wsh') from dual;
+
+77)To check the start time and end time of concurrent requests
+    select a.REQUEST_ID,to_char(a.REQUEST_DATE,'DD-MON-YYYY HH24:MI:SS'),a.REQUESTED_BY,
+    to_char(a.PP_START_DATE,'DD-MON-YYYY HH24:MI:SS'),to_char(a.PP_END_DATE,'DD-MON-YYYY HH24:MI:SS') 
+    ,round(a.PP_END_DATE - a.PP_START_DATE)
+    from fnd_concurrent_requests a,fnd_concurrent_programs_tl b  
+    where a.CONCURRENT_PROGRAM_ID=b.CONCURRENT_PROGRAM_ID and b.USER_CONCURRENT_PROGRAM_NAME='UTCFS WMS Value Added Kitting Report' 
+    order by REQUEST_DATE ;
+
+78)To check which responsibility is assigned to which user(may be required in prod)
+    select a.USER_ID,c.USER_NAME,b.RESPONSIBILITY_NAME,c.EMPLOYEE_ID,c.EMAIL_ADDRESS,c.START_DATE,c.LAST_UPDATE_DATE 
+    from fnd_user_resp_groups a,fnd_responsibility_tl b,fnd_user c 
+    where a.RESPONSIBILITY_ID=b.RESPONSIBILITY_ID  and b.RESPONSIBILITY_NAME like 'Process Execution for Mobile' and a.USER_ID=c.USER_ID;
+
+79)Invali index to valid
+    select INDEX_NAME,TABLE_OWNER,TABLE_NAME,status from all_indexes where INDEX_NAME='GES_MTL_MTRL_TRANS_TMP_N25';
+    alter index INV.GES_MTL_MTRL_TRANS_TMP_N25 REBUILD;
+    select INDEX_NAME,TABLE_OWNER,TABLE_NAME,status from all_indexes where INDEX_NAME='GES_MTL_MTRL_TRANS_TMP_N25';
+
+80)select sum(bytes)/1024/1024/1024||'GB' from v$tempfile;
+   select sum(bytes)/1024/1024/1024||'GB' from dba_segments;
+
+81)To terminate the concurrent from backend
+    update fnd_concurrent_requests set PHASE_CODE='C',STATUS_CODE='C' where REQUEST_ID='127617562';
+    update fnd_concurrent_requests set PHASE_CODE='C',STATUS_CODE='X' where REQUEST_ID='130272067';
+
+82)To find latest patchset level for modules installed in Oracle Apps R12.
+    select APP_SHORT_NAME, max(PATCH_LEVEL) from AD_PATCH_DRIVER_MINIPKS GROUP BY APP_SHORT_NAME;
+
+83)Validating sysadmin password from sql query
+    select fnd_web_sec.validate_login('SYSADMIN','g2r2Adm1n')from dual;
+     If it returns Y then sysadmin password is correct
+     If it returns N then sysadmin password that we are using is wrong
+
+84)Xplain plan out for
+    EXPLAIN PLAN FOR SELECT bug_number,creation_date FROM ad_bugs WHERE bug_number='17951125';
+    SELECT * FROM table(DBMS_XPLAN.DISPLAY);
+    select * from TABLE(dbms_xplan.display_awr('bsj0xfktu7br4'));
+
+85)select bug_number,creation_date,APPLICATION_SHORT_NAME from apps.ad_bugs where trunc(CREATION_DATE) <= trunc(to_date('1-NOV-13','DD-MON-YY'))
+
+86)GRANT privilege-type ON [TABLE] { table-Name | view-Name } TO grantees;
+   grant select on GL_LEGAL_ENTITIES_BSVS to DWREADER;
+
+87)alter user BIAPPSINFABO profile HARD_PASSWORD;
+
+88)To check the actual data base size
+    select sum (bytes)/1024/1024/1024 from dba_segments;
+     3403.76422119140625
+89)To check total datafile size 
+    select sum (bytes)/1024/1024/1024 from dba_data_files;
+     3827.4902191162109375
+90)To check free space left in database
+    select sum (bytes)/1024/1024/1024 from dba_free_space;
+     423.60296630859375
+
+91)To check the exact date from db
+select bug_number,to_char(creation_date,'DD-MON-RRRR HH24:MI:SS') "EXACT DATE" from ad_bugs where bug_number in ('17536464','18373101');
+
+92)To find the profile_option_name from user_profile_option_name 
+   select * from fnd_profile_options_tl where user_profile_option_name in ('IEX: Enable Credit Card Payment','IEX: Enable Electronic Funds Payment',
+   'IEX: Default Payment Method','IEX: Minimum Number of Characters for Lookup','IEX: Promise Grace Period','IEX: Callback Days for Broken Promise',
+   'IEX: Default End Date Range Span'); 
+
+93)To check if diskgroup is mounted or not:
+   select name,state from v$asm_diskgroup where NAME='BAANPRD_DATA';
+
+94)To mount a disk group
+   alter diskgroup BAANPRD_DATA mount;
+
+95)Resizing datafile
+   Check the datafiles having more free spaces
+    set pagesize 400
+    set linesize 450
+    col FILE_NAME format a70
+    select d.tablespace_name, d.file_id, d.file_name, d.bytes/1024/1024 allocated_MB, nvl(f.bytes/1024/1024,0) free_MB, (d.bytes-f.bytes)/1024/1024 used_MB
+    from (select tablespace_name, file_id, file_name, sum(bytes) bytes from dba_data_files group by tablespace_name, file_id, file_name) d,
+    (select tablespace_name, file_id, sum(bytes) bytes from dba_free_space group by tablespace_name, file_id) f
+    where d.tablespace_name like '%'
+    and d.tablespace_name = f.tablespace_name(+)
+    and d.file_id = f.file_id(+)
+    order by tablespace_name, file_id;
+
+Now resize the same datafile using alter resize command.
+
+96) To Check the object attached to a JOB
+   1) Check the state and JOB action of the JOB as below
+      select owner,job_name,job_type,job_action,state from dba_scheduler_jobs where JOB_NAME like '%LOCKS%';
+
+   2) Take the object from job_action column and search it in the dba_object table as below
+      select OBJECT_TYPE,object_name,owner from dba_objects where object_name like 'BLOCKING_LOCKS_MONITORING';
+
+   3) Now can check the content of the object as below
+      select dbms_metadata.get_ddl('PROCEDURE','BLOCKING_LOCKS_MONITORING','SYSTEM') from dual;
+ 
+ Note: Here a procedure is created first.
+       Then an empty job is created.
+       Now that procedure/schedular is attached to the empty job.
+       Now the job is enabled through dbms_schedular.
+        
+    Procedure-> attached to a job -> enabled through schedule
+SQL> BEGIN
+     sys.dbms_scheduler.create_job(
+        job_name => '"SYS"."BLOCKING_LOCKS_MONITORING_JOB"', --> Job name where the program,schedule procedure are attached
+        program_name => 'SYSTEM.BLOCKING_LOCKS',  --> Program where actual procedure code is attached above
+        schedule_name => 'SYS.LOCKS_SCHEDULE', --> It is a procedure for scheduling the above program.
+        job_class => 'DEFAULT_JOB_CLASS',  
+        comments => 'Job for monitoring blocking locks.',
+        auto_drop => FALSE,
+        enabled => TRUE);
+ END;
+  /
+97)Checking free mb from a particular from diskgroup.
+   select free_mb from v$asm_diskgroup where name='APSQAIT_DATA';
+
+98)Delete archive log commands
+   delete force noprompt archivelog all
+
+99)select instance_name,status,to_char(startup_time,'DD-MON-RRRR HH24:MI:SS') from gv$instance;
+
+100)Checking a particular object lock
+    column oracle_username format a15
+    column os_user_name format a15
+    column object_name format a37
+    column object_type format a37
+    select a.session_id,a.oracle_username, a.os_user_name, b.owner "OBJECT OWNER", b.object_name,b.object_type,a.locked_mode from
+    (select object_id, SESSION_ID, ORACLE_USERNAME, OS_USER_NAME, LOCKED_MODE from v$locked_object) a,
+    (select object_id, owner, object_name,object_type from dba_objects) b
+    where a.object_id=b.object_id
+
+101)Check fuzzy should be in same state after clone(After Control file creation and all file creation fuzzy should be yes.)
+    SQL> select distinct to_char(CHECKPOINT_CHANGE#),fuzzy from v$datafile_header;
+
+    TO_CHAR(CHECKPOINT_CHANGE#)              FUZ
+    ---------------------------------------- ---
+    11339588311442                           YES
+
+102)To end date any fnd user from backend:
+
+    DECLARE
+      -- get user list which should be disabled
+      cursor c1 is
+      select user_name
+         from fnd_user
+          where user_name in ('CHAUDHKA'); --or the list of users which needs to be excluded
+             -- and (end_date is null or end_date > sysdate)[ needed  for only active users. Otherwise previously terminated users end date will also be altered to      sysdate]
+    BEGIN
+      for c in c1 loop
+        fnd_user_pkg.updateuser(x_user_name=>c.user_name,x_owner=>'CUST',x_end_date=>SYSDATE);
+      end loop;
+    --commit changes
+      commit;
+    END;
+
+103)To re-enable fnd user from backend
+
+    DECLARE
+     cursor c1 is
+      select user_name
+         from fnd_user
+         where user_name in ('CHAUDHKA');
+    BEGIN
+      for c in c1 loop
+        fnd_user_pkg.updateuser(x_user_name=>c.user_name,x_owner=>'CUST',x_end_date=>to_date('2', 'J'));
+      end loop;
+      commit;
+    END;
+
+    passed x_end_date=>to_date('2', 'J') and not x_end_date=>NULL ,its simply because this API don’t support x_end_date as NULL. Oracle treats value 1/2/4712 BCE as        null .
+   
+    Ref: Ref http://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CDEFDCJH 
+    Further reference : How to End-Date/Delete an Applications User (Doc ID 1064798.1)
+
+104)Drop user apps cascade,
+
+105)Check sum of sizes of all indexes
+    select owner,sum(bytes)/1024/1024/1024 as "SIZE in GB" from dba_segments where owner='APPS' and segment_type='INDEX' group by owner;
+
+106)Check size of all schemas
+    select owner,sum(bytes)/1024/1024/1024 as "SIZE in GB" from dba_segments group by owner order by owner;
+
+107)Tempfile resizing
+    alter database tempfile '+QAIT_DATA01/qait/tempfile/temp.341.851039507' resize 10g;
+
+108)Check the diskgroups used by temp tablespace
+    select * from v$tempfile;
+
+109)Check the size of temp tablespace
+    select sum(bytes)/1024/1024/1024 from v$tempfile;
+
+110)Check if instance is using pfile or spfile(if value is null return pfile else spfile)
+    SELECT DECODE(value, NULL, 'PFILE', 'SPFILE') "Init File Type"
+    FROM sys.v_$parameter WHERE name = 'spfile'; 
+
+111)Tracking the Tuned Undo Retention Period(it will show data for 4 days,Beyond 4 days, the data is available in the DBA_HIST_UNDOSTAT view.)	
+    select to_char(begin_time, 'DD-MON-RR HH24:MI') begin_time,to_char(end_time, 'DD-MON-RR HH24:MI') end_time, tuned_undoretention
+    from v$undostat order by end_time;
+
+112)select a. tablespace_name,sum(a.bytes)/(1024*10240) "Allocation in MB",sum(b.bytes)/(1024*10240) "Used in MB"
+    from dba_data_files a, dba_segments b where a.tablespace_name = b.tablespace_name group by a.tablespace_name;
+
+113)sho parameter undo
+
+114)select tablespace_name,sum(bytes) from dba_data_files group by tablespace_name;
+
+115)SELECT DISTINCT STATUS, SUM(BYTES), COUNT(*) FROM DBA_UNDO_EXTENTS GROUP BY STATUS;
+
+116)select tablespace_name,STATUS,count(*),ceil(sum(bytes/1024/1024)) MB_SZ from dba_undo_extents group by tablespace_name,status;
+
+118)DECODE Syntax
+    SELECT DECODE ( "column_name", "search_value_1", "result_1",
+    ["search_value_n", "result_n"],
+    {"default_result"} ); 
+
+119)Check if instance is using pfile or spfile(if value is null return pfile else spfile)
+    SELECT DECODE(value, NULL, 'PFILE', 'SPFILE') "Init File Type" FROM sys.v_$parameter WHERE name = 'spfile'; 
+
+120)National Language Support (NLS) 
+    To check the database character set
+    select * from v$nls_parameters where parameter like '%CHARACTERSET%';
+
+121)SELECT * FROM NLS_DATABASE_PARAMETERS;
+
+122)Check Wasted space on any table
+    set lines 200;
+    column owner format a15;
+    column segment_name format a30;
+    select
+    a.owner,
+    a.segment_name,
+    a.segment_type,
+    round(a.bytes/1024/1024,0) MBS,
+    round((a.bytes-(b.num_rows*b.avg_row_len) )/1024/1024,0) WASTED
+    from dba_segments a, dba_tables b
+    where a.owner=b.owner
+    and a.owner not like 'SYS%'
+    and a.segment_name = b.table_name
+    and a.segment_type='TABLE'
+    group by a.owner, a.segment_name, a.segment_type, round(a.bytes/1024/1024,0) ,round((a.bytes-(b.num_rows*b.avg_row_len) )/1024/1024,0)
+    having round(bytes/1024/1024,0) >100
+    order by round(bytes/1024/1024,0) desc ; 
+
+123)Check the package content using DBMS_SOURCE
+
+124)select SCN_TO_TIMESTAMP(<APSPRODDR SCN>) from dual;
+
+125)Change Site Name from backend
+    update fnd_profile_option_values set profile_option_value='APSQAIT-16AUG14(Clone Date)-15AUG14(Source Data date)' where profile_option_id=125;
+
+126)Check trace from backend
+     SELECT 'Request id: '||request_id ,
+     'Trace id: '||oracle_Process_id,
+     'Trace Flag: '||req.enable_trace,
+     'Trace Name:
+     '||dest.value||'/'||lower(dbnm.value)||'_ora_'||oracle_process_id||'.trc',
+     to_char(req.REQUEST_DATE,'DD-MON-RRRR HH24:MI:SS'),
+     'Prog. Name: '||prog.user_concurrent_program_name,
+     'File Name: '||execname.execution_file_name|| execname.subroutine_name ,
+     'Status : '||decode(phase_code,'R','Running')
+     ||'-'||decode(status_code,'R','Normal'),
+     'SID Serial: '||ses.sid||','|| ses.serial#,
+     'Module : '||ses.module
+     from fnd_concurrent_requests req, v$session ses, v$process proc,
+     v$parameter dest, v$parameter dbnm, fnd_concurrent_programs_vl prog,
+     fnd_executables execname
+     where req.request_id = &request
+     and req.oracle_process_id=proc.spid(+)
+     and proc.addr = ses.paddr(+)
+     and dest.name='user_dump_dest'
+     and dbnm.name='db_name'
+     and req.concurrent_program_id = prog.concurrent_program_id
+     and req.program_application_id = prog.application_id
+     and prog.application_id = execname.application_id
+     and prog.executable_id=execname.executable_id;
+
+127)select a.REQUEST_ID,a.REQUEST_DATE,a.REQUESTED_BY,a.REQUESTED_START_DATE,a.LOGFILE_NAME,a.OUTFILE_NAME,a.ENABLE_TRACE,
+    a.PP_START_DATE,a.PP_END_DATE,b.CONCURRENT_PROGRAM_NAME from fnd_concurrent_requests a,fnd_concurrent_programs b 
+    where a.CONCURRENT_PROGRAM_ID= b.CONCURRENT_PROGRAM_ID and  b.CONCURRENT_PROGRAM_NAME='AUTOREMAPI' order by a.REQUEST_DATE desc;
+
+128)Check if service components are up or not.
+   select component_name||'       '||COMPONENT_STATUS from fnd_svc_components where component_status != 'RUNNING' ;
+
+129)select Grantee,'Granted Through Role' as Grant_Type, role, table_name from role_tab_privs rtp, dba_role_privs drp
+    where rtp.role = drp.granted_role and table_name = 'OBIEE_QUERY'
+
+
+    role_tab_privs
+    DBA_COL_PRIVS;
+    USER_COL_PRIVS;
+    USER_ROLE_PRIVS, 
+    DBA_ROLE_PRIVS 
+    ROLE_TAB_PRIVS 
+
+130)SELECT grantee, table_name, column_name, privilege FROM sys.dba_col_privs;
+
+131)SELECT * FROM sys.dba_roles;
+
+132)SELECT GRANTEE, OWNER, GRANTOR, PRIVILEGE, GRANTABLE FROM DBA_TAB_PRIVS WHERE TABLE_NAME = 'employees'; 
+
+133)List all users who have been assigned a particular role
+    select * from dba_role_privs where granted_role = 'Role Name'
+
+134)List all roles given to a user
+    select * from dba_role_privs where grantee = 'User Name';
+    select * from dba_role_privs where grantee = 'User Name';
+
+135)List which tables a certain role gives SELECT access to?
+    select * from role_tab_privs where role='Role Name' and privilege = 'SELECT';
+
+136)List all tables a user can SELECT from?
+    select * from dba_tab_privs where GRANTEE ='User Name' and privilege = 'SELECT';
+
+137)Enabling CODS auto trigger job 
+    Check form user_objects (broken column N means enabled,Column Y means disabled)
+                            (Check the object id)
+    Execute the package     EXEC DBMS_JOB.BROKEN(1,FALSE); (False Enable,True Disable)
+    Execute the package     EXEC DBMS_JOB.BROKEN(2,FALSE); (False Enable,True Disable)\
+	
+137)RUn job
+    exec dbms_job.run(23);
+
+138)exec kill_session_proc(<SID>,<Serial#>,<Inst_id>);
+
+139)Add devrdm alias entry in tnsnames.ora
+    sqlplus rdm_raw/RDM_RAW@devrdm
+	
+	CRQ000000749062 
+	
+140)CODS job trigger query
+    select ID,MODULE_NAME,STATUS,to_char(process_dt,'DD-MON-YYYY HH:MI:SSAM') from ods_control where ID in ('805','806') order by process_dt desc ;
+	
+	to_char(process_dt,'DD-MON-YYYY HH:MI:SSAM')
+
+	
+SQL> select * from ods_control order by process_dt desc
+  2  ;
+
+        ID MODULE_NAM STATUS               PROCESS_DT
+
+
+141)check if any MDM job is running or not
+    select * from dba_jobs;
+	
+142)select * from user_tab_privs where GRANTEE ='KABRAG'
+
+143)SELECT S.sid || ',' || S.serial# sid_serial, S.username, S.osuser, P.spid, S.module,
+    P.program, SUM (T.blocks) * TBS.block_size / 1024 / 1024 mb_used, T.tablespace,
+    COUNT(*) statements
+    FROM v$sort_usage T, v$session S, dba_tablespaces TBS, v$process P
+    WHERE T.session_addr = S.saddr
+    AND S.paddr = P.addr
+    AND T.tablespace = TBS.tablespace_name
+    GROUP BY S.sid, S.serial#, S.username, S.osuser, P.spid, S.module,
+    P.program, TBS.block_size, T.tablespace
+    ORDER BY sid_serial;
+
+144)select systimestamp,to_char(process_dt,'DD-MON-YYYY HH:MI:SSAM'), a.* from ods_control a order by A.process_dt desc
+        commit;
+	BEGIN DBMS_JOB.run(2);END;
+    BEGIN
+    DBMS_JOB.BROKEN(22,FALSE);
+    commit;
+    END;
+144)select * from "_Metrics_DO"  where "_UniqueID" like 'ICON_B1931022_Study_Out_20150127T162135';
+
+145)BEGIN
+  SYS.DBMS_STATS.GATHER_SCHEMA_STATS (
+     OwnName           => 'IXH_CUST'
+    ,Granularity       => 'DEFAULT'
+    ,Options           => 'GATHER'
+    ,Estimate_Percent  => NULL
+    ,Method_Opt        => 'FOR ALL INDEXED COLUMNS SIZE AUTO '
+    ,Degree            => 8
+    ,Cascade           => TRUE
+    ,No_Invalidate     => FALSE);
+END;
+/
+
+146)Check all users privileges
+    select * from user_sys_privs;
+	select * from dba_sys_privs;
+	
+147)Select NOTIFICATION_ID, begin_date, end_date, MESSAGE_TYPE, MESSAGE_NAME, STATUS, MAIL_STATUS, 
+    FROM_USER, TO_USER from wf_notifications where end_date > '11-FEB-2015' and message_name 
+    like 'MSG_PASSWORDRESET' order by end_date;
+	
+148)select text from all_source where name = 'PADCAMPAIGN' 
+    and type = 'PACKAGE BODY'
+    order by line;
+
+149)Grant read only to user
+149)Grant read only to user
+	select 'GRANT SELECT,INSERT,UPDATE,CREATE ON '||OWNER||'.'||OBJECT_NAME||' TO sarmad;' from dba_objects where OWNER in ('RDM_PRELDG','RDM_RAW','CMX_ORS') and object_type in ('TABLE');
+	select 'GRANT SELECT ON '||OWNER||'.'||OBJECT_NAME||' TO kolaya,shuklc02;' from dba_objects where OWNER in ('RDM_RAW','RDM_PRELDG','CMX_ORS','CMX')
+    and object_type in ('TABLE');
+	select 'GRANT SELECT ON '||TABLE_NAME||' TO gupts105;' from user_tables;
+	
+150)insert into table 
+    insert into table_name select * from <orig_table_name>
+	
+151)select to_char(sysdate,'DD-MON-YYYY HH:MI:SSAM') from dual;
+
+152)alter session set nls_date_format='dd-mon-yyyy hh24:mi:ss';
+
+153)select file#, blocks, datafile_blocks, round((blocks / datafile_blocks * 100), 2) Perc_used
+    from v$backup_datafile;
+154)SELECT NAME FROM V$CONTROLFILE;
+155)create tablespace ts1 datafile "Datafile path name" size 10m autoextend on maxsize 10g;
+155)create user raz identified by raz quota unlimited on ts1 default tablespace ts1;
+156)Grant xplain plan privelege to db user
+    grant execute on dbms_xplan_type to PANYAS01;
+	
+157)RBS Usage
+    The longer a transaction, the larger the rollback segment the session will require. This script will interrogate v$rollstat and v$rollname to get the current RBS usage and display the space used for rollback segments for a specific session.  For the full scripts to monitor rollback segment usage, see the Oracle script collection.
+
+         COLUMN  name FORMAT a10         HEADING "Rollback|Segment"
+         COLUMN  pid  FORMAT 99999       HEADING "Oracle|PID"
+         COLUMN  spid FORMAT 99999       HEADING "Sys|PID"
+         COLUMN  curext FORMAT 999999    HEADING "Current|Extent"
+         COLUMN  curblk FORMAT 999999    HEADING "Current|Block"
+         COLUMN transaction FORMAT A15   Heading 'Transaction'
+         COLUMN program FORMAT a10 HEADING 'Program'
+         
+         SET PAGES 56  LINES 80 VERIFY OFF FEEDBACK OFF
+         START title80 "Rollback Segments in Use"
+         SPOOL rep_out\&db\tx_rbs
+         
+         SELECT
+              r.name, l.Sid, p.spid,
+              NVL(p.username, 'no transaction') "Transaction",
+              p.program "Program",
+              s.curext,s.curblk
+         FROM
+              v$lock l,
+              v$process p,
+              v$rollname r,
+              v$rollstat s
+         WHERE
+                  l.Sid = p.pid (+)
+              AND TRUNC(l.id1(+) / 65536) = r.usn
+              AND l.type(+) = 'TX'
+              AND l.lmode(+) = 6
+              AND r.usn=s.usn
+              AND p.username is not null
+         ORDER BY r.name;
+         
+         SPOOL OFF
+         SET PAGES 22  LINES 80 VERIFY ON FEEDBACK ON
+         CLEAR COLUMNS
+         TTITLE OFF
+		 
+158)select * from dba_rollback_segs;
+159)select * from v$undostat;
+160)Gather schema statistics
+    execute dbms_stats.gather_schema_stats('ODS');
+	EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS('<Schema_Name>',DBMS_STATS.AUTO_SAMPLE_SIZE);
+161)put to_date format
+    delete from rdm_raw.raw_clin_study_site where last_update_date > to_date('25-JUN-2015 01.01.40 PM','DD-MON-YYYY HH12.MI.SS PM');
+	
+162)GRANT SELECT ON CMX_ORS.C_REPOS_MQ_RULE_SYSTEM_REL TO RDM_PRELDG WITH GRANT OPTION;
+    GRANT SELECT ON CMX_ORS.C_REPOS_OBJ_FUNCTION_TYPE TO RDM_PRELDG WITH GRANT OPTION;
+	
+163)To check the indexes on a table column
+    select * from DBA_IND_COLUMNS where table_name like 'WC_ODWX_CONTACT_ASSOCIATION_F';
+	
+164)create table apps.W_HS_APPLICATION_USER_D_19aug2015 as select * from odwx.W_HS_APPLICATION_USER_D;
+
+165)Alter session set current_schema=ixh_cust;
+
+166)Check a column belongs to which table
+    select table_name, column_name from dba_tab_columns where column_name like '%PER_INV_IND%';
+	
+167)To check total and used database size
+    select ROUND(dbspace.u+logspace.aa,2) "USED SIZE", ROUND(dbspace.t+logspace.aa,2) "TOTAL SIZE" 
+    from 
+    (select sum(Free_space) f,sum(Used_space) u,sum(total_space) t 
+    from 
+    (SELECT Total.name "Tablespace Name", 
+           nvl(Free_space, 0) Free_space, 
+           nvl(total_space-Free_space, 0) Used_space, 
+           total_space 
+    FROM 
+      (select tablespace_name, sum(bytes/1024/1024/1024) Free_Space 
+         from sys.dba_free_space 
+        group by tablespace_name 
+      ) Free, 
+      (select b.name,  sum(bytes/1024/1024/1024) TOTAL_SPACE 
+         from sys.v_$datafile a, sys.v_$tablespace B 
+        where a.ts# = b.ts# 
+        group by b.name 
+      ) Total 
+    WHERE Free.Tablespace_name(+) = Total.name 
+    ORDER BY Total.name)) dbspace, 
+    (select sum(bytes)/1024/1024/1024 aa from v$log) logspace
+	
+168)Check IXH file polling status from sftp to shared
+    select count(distinct(file_name)) from ixh_cust.file_tracking where file_name like '%PFIZER%Site_20160129%' and file_target='RDM+ODW';
+	
+169)SELECT t.ctn_no
+    FROM YOUR_TABLE t
+GROUP BY t.ctn_no
+  HAVING COUNT(t.ctn_no) > 1
+  
+170)Check if stats are enabled in database.
+   select client_name, status from dba_autotask_client;
+   
+171)select ID,MODULE_NAME,STATUS,to_char(process_dt,'DD-MON-YYYY HH:MI:SSAM') from ods.ods_control order by process_dt desc
+
+172)Update cods_pods control table
+    update CODS_PODS_SCHD_CNTRL set TIMESTAMP=sysdate where SYSTEM like 'CODS'; 
+
+173)Role Creation in TEST4 env 
+   CREATE ROLE odw_select_data_role;
+   GRANT select ON object TO odw_select_data_role
+   select 'GRANT SELECT ON '||OWNER||'.'||OBJECT_NAME||' TO odw_select_data_role;' from dba_objects where OWNER in ('ODWSTG','ODWX') and object_type in ('TABLE');
+   create user raaj identified by raaj;
+   grant connect,resource,create session to raaj;
+   
+174)  select 'GRANT SELECT ON  '||TABLE_NAME||' TO REDDYH16;' from user_tables;
+   
+174)Check RDM MDM job is in progress
+     select * from cmx_ors.c_repos_job_control order by start_run_date desc; 
+     select sysdate from dual;
+	 
+175)Check if RDM MDM job has any lock
+	 select * from cmx_ors.C_REPOS_APPLIED_LOCK;
+     select * from cmx_ors.C_REPOS_SCHEMA_WRITE_LOCK;
+176)Check response file reduce count
+    select count(*) from file_tracking where file_name like '%20160525%'  and  response_status is null  
+	
+177)Run from cdr schema
+    select 'GRANT SELECT ON '||OWNER||'.'||OBJECT_NAME||' TO APPS WITH GRANT OPTION;' from dba_objects where OWNER like 'CDR' and object_type in ('TABLE');
+
+178)Run from apps schema
+    select 'GRANT SELECT ON '||OWNER||'.'||OBJECT_NAME||' TO jacobj30;' from dba_objects where OWNER like 'APPS' and object_type in ('VIEW')
+    and object_name like '%CDR%';
+	
+179)Tablespace size related queries
+    select b.tablespace_name, tbs_size TOTALSizeinGB,ROUND ((tbs_size - a.free_space), 2) AS "Used Space(GB)",a.free_space FreeGB
+    from  (select tablespace_name, round(sum(bytes)/1024/1024/1024 ,2) as free_space
+       from dba_free_space
+       group by tablespace_name) a,
+      (select tablespace_name, sum(bytes)/1024/1024/1024 as tbs_size
+       from dba_data_files
+       group by tablespace_name) b
+    where a.tablespace_name(+)=b.tablespace_name order by tablespace_name;
+
+180)DB size and free space left including redo log size
+    select ROUND(dbspace.u+logspace.aa,2) "USED SIZE", ROUND(dbspace.t+logspace.aa,2) "TOTAL SIZE" 
+    from 
+    (select sum(Free_space) f,sum(Used_space) u,sum(total_space) t 
+    from 
+    (SELECT Total.name "Tablespace Name", 
+           nvl(Free_space, 0) Free_space, 
+           nvl(total_space-Free_space, 0) Used_space, 
+           total_space 
+    FROM 
+      (select tablespace_name, sum(bytes/1024/1024/1024) Free_Space 
+         from sys.dba_free_space 
+        group by tablespace_name 
+      ) Free, 
+      (select b.name,  sum(bytes/1024/1024/1024) TOTAL_SPACE 
+         from sys.v_$datafile a, sys.v_$tablespace B 
+        where a.ts# = b.ts# 
+        group by b.name 
+      ) Total 
+    WHERE Free.Tablespace_name(+) = Total.name 
+    ORDER BY Total.name)) dbspace, 
+
+    (select sum(bytes)/1024/1024/1024 aa from v$log) logspace
+
+181)    
+    select sum (bytes)/1024/1024/1024 from dba_segments;    
+	select sum(bytes/1024/1024/1024), sum(maxbytes/1024/1024/1024) from dba_data_files;
+	select SUM( bytes )/(1024 * 1024 *1024) from dba_free_space;
+	select SUM( bytes )/(1024 * 1024 *1024) from v$tempfile;  
+     
+    select SUM( bytes )/(1024 * 1024 *1024) as "Total Size IN GB" from dba_data_files;
+	
+    select SUM( bytes )/(1024 * 1024 *1024) from v$tempfile;   
+    
+	 select SUM( bytes )/(1024 * 1024 *1024) from v$log;  
+
+	
+182)Check fragmented space in schemas
+    select table_name, tablespace_name, round((blocks*8)/1024,2) "Occupied_Space (MB)"
+    ,round((num_rows*avg_row_len/1024/1024),2) "Actual_Data_Size (MB)"
+    ,round((blocks*8)/1024,2) - round((num_rows*avg_row_len/1024/1024),2) "Fragmented_Space (MB)"
+	,round(((blocks*8)-(num_rows*avg_row_len/1024))*100/(blocks*8),2) "Fragmentation %"
+    from dba_tables where round((num_rows*avg_row_len/1024/1024),2) >= 100
+    and round(((blocks*8)-(num_rows*avg_row_len/1024))*100/(blocks*8),2) >= 40
+    and (round((blocks*8),2) > round((num_rows*avg_row_len/1024),2))
+    and owner = '&SCHEMA_NAME' order by 5 desc;  
+	
+183)Check if a table can be compressed to what extend 
+    set serveroutput on size unlimited;
+    declare
+     v_blkcnt_cmp     pls_integer;
+     v_blkcnt_uncmp   pls_integer;
+     v_row_cmp        pls_integer;
+     v_row_uncmp      pls_integer;
+     v_cmp_ratio      number;
+     v_comptype_str   varchar2(60);
+    begin
+     dbms_compression.get_compression_ratio(
+     scratchtbsname   => upper('apps_ts_tx_data'),      
+     ownname          => user,           
+     tabname          => upper('WC_ODWX_PROTOCOL_DEVIATION_F'),   
+     partname         => NULL,           
+     comptype         => dbms_compression.comp_for_query_high,    
+     blkcnt_cmp       => v_blkcnt_cmp,    
+     blkcnt_uncmp     => v_blkcnt_uncmp,  
+     row_cmp          => v_row_cmp,    
+     row_uncmp        => v_row_uncmp,  
+     cmp_ratio        => v_cmp_ratio,  
+     comptype_str     => v_comptype_str);
+     dbms_output.put_line('Estimated Compression Ratio: '||to_char(v_cmp_ratio));
+     dbms_output.put_line('Blocks used by compressed sample: '||to_char(v_blkcnt_cmp));
+     dbms_output.put_line('Blocks used by uncompressed sample: '||to_char(v_blkcnt_uncmp));
+    end;
+    /
+    
+    
+    Compression Advisor self-check validation successful. select count(*) on both Uncompressed and EHCC Compressed format = 1000001 rows
+    Estimated Compression Ratio: 73.7
+    Blocks used by compressed sample: 523
+    Blocks used by uncompressed sample: 38549
+    PL/SQL procedure successfully completed.
+	
+184)check if user has  quota on tablespaces
+    SELECT username,tablespace_name, bytes, max_bytes 
+    FROM dba_ts_quotas WHERE tablespace_name ='SYSTEM';
+	
+185)Query to find who is using TEMP tablespace:
+    SET LINES 150
+    SET pages 300
+    col “Tablespace” FOR a30
+    col “Total MB” FOR a15
+    col “Free MB” FOR a15
+    col “Used MB” FOR a15
+    col “% Used” FOR a15
+    SELECT tablespace_name “Tablespace”,
+    d.STATUS “Status”,
+    TO_CHAR((a.bytes / 1048576),’99,999,990.900') “Total MB”,
+    TO_CHAR(((DECODE(f.bytes, NULL, 0, f.bytes)) / 1048576),’99,999,990.900') “Free MB”,
+    TO_CHAR(((a.bytes – DECODE(f.bytes, NULL, 0, f.bytes)) / 1048576),’99,999,990.900') “Used MB”,
+    TO_CHAR((((a.bytes – DECODE(f.bytes, NULL, 0, f.bytes)) / 1048576)*100) / (a.bytes / 1048576),’999,999.9') “% Used”
+    FROM
+    (sys.dba_tablespaces d JOIN sys.sm$ts_avail a USING (tablespace_name))
+    LEFT OUTER JOIN sys.sm$ts_free f USING (tablespace_name)
+    ORDER BY 6
+    /Another useful query
+ 
+
+     col “Tablespace” for a13
+     col “Used MB” for 99,999,999
+     col “Free MB” for 99,999,999
+     col “Total MB” for 99,999,999
+     col “Block Size” for 9,999,999
+     select
+     df.tablespace_name “Tablespace”,
+     block_size “Block Size”,
+     (df.totalspace – fs.freespace) “Used MB”,
+     fs.freespace “Free MB”,
+     df.totalspace “Total MB”,
+     round(100 * (fs.freespace / df.totalspace)) “Pct. Free”
+     from
+     dba_tablespaces ts,
+     (select tablespace_name,
+     round(sum(bytes) / 1048576) TotalSpace
+     from dba_data_files
+     group by tablespace_name) df,
+     (select tablespace_name,
+     round(sum(bytes) / 1048576) FreeSpace
+     from dba_free_space
+     group by tablespace_name) fs
+     where
+     ts.tablespace_name = fs.tablespace_name
+     and
+     df.tablespace_name = fs.tablespace_name(+)
+     ;
+
+186)Calculate UNDO Retention  
+
+    SELECT d.undo_size/(1024*1024) “ACTUAL UNDO SIZE [MByte]“,
+    SUBSTR(e.value,1,25) “UNDO RETENTION [Sec]“,
+    ROUND((d.undo_size / (to_number(f.value) *
+    g.undo_block_per_sec))) “OPTIMAL UNDO RETENTION [Sec]“
+    FROM (
+    SELECT SUM(a.bytes) undo_size
+    FROM v$datafile a,
+    v$tablespace b,
+    dba_tablespaces c
+    WHERE c.contents = ‘UNDO’
+    AND c.status = ‘ONLINE’
+    AND b.name = c.tablespace_name
+    AND a.ts# = b.ts#
+    ) d,
+    v$parameter e,
+    v$parameter f,
+    (
+    SELECT MAX(undoblks/((end_time-begin_time)*3600*24))
+    undo_block_per_sec
+    FROM v$undostat
+    ) g
+    WHERE e.name = ‘undo_retention’
+    AND f.name = ‘db_block_size’
+    /	
+
+187)Query to pull CDR user details:
+    select username from dba_users where  length(username) >=4 and username not like '%CDR%' AND USERNAME NOT LIKE 'BA_%';
+
+188)Drop jobs
+    exec DBMS_SCHEDULER.DROP_JOB(job_name => 'TEST_FULL_JOB_DEFINITION');	
+	
+189)Query to create all backup table from all table of a different schema
+
+190)select DISTINCT substr(name,1,20) from v$datafile; 
+191)select DISTINCT substr(file_name,1,20) from dba_temp_files;
+192)select DISTINCT substr(member,1,20) from gv$logfile; 
